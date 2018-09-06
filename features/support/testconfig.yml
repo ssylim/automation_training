@@ -1,0 +1,14 @@
+#global values can be overwritten by assigning after global import <<: *global
+global: &global
+  secure_scheme: true
+  default_browser: :chrome
+  default_timeout: 30
+  ldap_server_host: 10.120.4.101
+
+theinternet:
+  default_site: http://the-internet.herokuapp.com
+  capybara_default_driver: :selenium
+  <<: *global
+  default_timeout: 10
+  valid_username: tomsmith
+  valid_password: SuperSecretPassword!
