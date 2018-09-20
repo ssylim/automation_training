@@ -13,8 +13,16 @@ Before do |scenario|
   Capybara.default_max_wait_time = TestConfig["default_timeout"]
   Capybara.app_host = TestConfig["default_site"]
 
+  caps_arr = []
+  caps_arr[0] = '--start-maximized'
+  if TestConfig['headless']
+    caps_arr[1] = '--headless'
+  end
+
+  caps = Selenium::WebDriver::Remote::Capabilities.chrome("chromeOptions" => {"args" => caps_arr})
+
   Capybara.register_driver :selenium do |app|
-      caps = Selenium::WebDriver::Remote::Capabilities.chrome("chromeOptions" => {"args" => ["--start-maximized"]})
+
       @browser = Capybara::Selenium::Driver.new(app, {:browser => TestConfig["default_browser"], :desired_capabilities => caps})
   end
 end
@@ -23,20 +31,26 @@ After do
   Capybara.current_session.driver.quit
 end
 
-#for parallel tests
-Capybara.server_port = 8888 + ENV['TEST_ENV_NUMBER'].to_i
-
-module Helpers
-  def without_resynchronize
-    page.driver.options[:resynchronize] = false
-    yield
-    page.driver.options[:resynchronize] = true
+After do |scenario|
+  if scenario.failed?
+    dir_path = 'features/screenshots/'
+    if Dir.exist?(dir_path)
+      Dir.foreach(dir_path) do |f|
+        file = File.join(dir_path, f)
+        #File.delete(file) if f != '.' && f != '..'
+      end
+      p "=========Directory exists at #{dir_path}"
+    else
+      Dir.mkdir(dir_path, 0777)
+      p "=========Directory is created at #{dir_path}"
+    end
+    time = Time.now.strftime('%d_%m_%YT%H_%M_%S_')
+    name_of_scenario = time + "#{scenario.name}"
+    p "Name of snapshot is #{name_of_scenario}"
+    file_path = File.expand_path(dir_path)+'/'+name_of_scenario +'.png'
+    page.driver.browser.save_screenshot file_path
+    p 'Snapshot is taken'
+    p '#===========================================================#'
+    p "Scenario: #{scenario.name}"
   end
-end
-
-World(Capybara::DSL, Helpers)
-
-#this is executed at the end
-at_exit do
-  $test_case_id = nil
 end

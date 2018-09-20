@@ -12,3 +12,4 @@ theinternet:
   default_timeout: 10
   valid_username: tomsmith
   valid_password: SuperSecretPassword!
+  headless: false
